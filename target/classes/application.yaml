@@ -1,0 +1,14 @@
+
+spring:
+  ai:
+    openai:
+      chat:
+        base-url: ${OPENAI_BASE_URL}
+        api-key: test
+        options:
+          model: chatglm3
+      api-key: sk-test
+      base-url: ${OPENAI_BASE_URL}
+
+server:
+  port: 8080
