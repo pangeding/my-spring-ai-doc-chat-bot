@@ -1,4 +1,4 @@
-package contoller;
+package com.pangeding.springaidocchatbot.contoller;
 
 import org.springframework.ai.chat.ChatResponse;
 import org.springframework.ai.chat.messages.UserMessage;
