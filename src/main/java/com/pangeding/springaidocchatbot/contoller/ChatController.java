@@ -1,9 +1,10 @@
 package com.pangeding.springaidocchatbot.contoller;
 
-import org.springframework.ai.chat.ChatResponse;
+
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.OpenAiChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,30 +22,24 @@ import java.util.Map;
 @RestController
 public class ChatController {
 
-    private final OpenAiChatClient chatClient;
+    private final ChatClient chatClient;
 
     @Autowired
-    public ChatController(OpenAiChatClient chatClient) {
-        this.chatClient = chatClient;
+    public ChatController(ChatClient.Builder builder) {
+        this.chatClient = builder.build();
     }
 
     @GetMapping("/ai/generate")
-    public Map generate(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message) {
-        return Map.of("generation", chatClient.call(message));
+    public Map<String, String> generate(@RequestParam(value = "message", defaultValue = "介绍你自己") String message) {
+        String response = chatClient.prompt().user(message).call().content();
+        return Map.of("generation", response);
     }
 
     @GetMapping("/ai/generateStream")
-    public Flux<ChatResponse> generateStream(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message) {
-        Prompt prompt = new Prompt(new UserMessage(message));
-        Flux<ChatResponse> stream = chatClient.stream(prompt);
-        SseEmitter sseEmitter = new SseEmitter();
-        stream.subscribe((ChatResponse chatResponse) -> {
-            try {
-                sseEmitter.send(chatResponse);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        return stream;
+    public Flux<String> generateStream(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message) {
+        return chatClient.prompt()
+                .user(message)
+                .stream()
+                .content();
     }
 }
