@@ -1,0 +1,17 @@
+# 忽略本地配置文件（包含敏感信息）
+src/main/resources/application-local.yaml
+
+
+# 忽略环境变量配置文件
+.env
+.env.local
+
+# 忽略IDE生成的文件
+.idea/
+*.iml
+out/
+target/
+
+# 忽略操作系统临时文件
+.DS_Store
+Thumbs.db
