@@ -1,14 +1,8 @@
 
 spring:
   ai:
-    openai:
-      chat:
-        base-url: ${OPENAI_BASE_URL}
-        api-key: test
-        options:
-          model: chatglm3
-      api-key: sk-test
-      base-url: ${OPENAI_BASE_URL}
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY}
 
 server:
   port: 8080
