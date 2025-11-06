@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI聊天助手</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 顶部导航 -->
+        <header class="header">
+            <h1>AI聊天助手</h1>
+            <div class="upload-btn" @click="showUpload = true">
+                <i class="icon-upload"></i> 上传文档
+            </div>
+        </header>
+
+        <!-- 聊天消息区域 -->
+        <main class="chat-container">
+            <div class="message-list" ref="messageList">
+                <!-- 欢迎消息 -->
+                <div class="message ai-message">
+                    <div class="avatar">AI</div>
+                    <div class="content">
+                        你好！我是AI助手，可以帮你解答问题。你可以上传文档（PDF/TXT/MD）并基于文档内容提问，也可以直接向我提问。
+                    </div>
+                </div>
+
+                <!-- 动态消息列表 -->
+                <div v-for="(msg, index) in messages" :key="index" 
+                     :class="['message', msg.isUser ? 'user-message' : 'ai-message']">
+                    <div class="avatar">{{ msg.isUser ? '我' : 'AI' }}</div>
+                    <div class="content">{{ msg.text }}</div>
+                </div>
+
+                <!-- 加载中提示 -->
+                <div class="loading" v-if="loading">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 输入区域 -->
+        <footer class="input-area">
+            <textarea 
+                v-model="inputText" 
+                placeholder="请输入问题..." 
+                @keydown.enter="handleSend($event)"
+            ></textarea>
+            <button @click="handleSend">发送</button>
+            <button @click="handleStreamSend" class="stream-btn">流式发送</button>
+        </footer>
+
+        <!-- 上传文件弹窗 -->
+        <div class="modal" v-if="showUpload">
+            <div class="modal-content">
+                <h3>上传文档</h3>
+                <input type="file" ref="fileInput" accept=".pdf,.txt,.md" @change="handleFileUpload">
+                <p class="tip">支持格式：PDF、TXT、MD</p>
+                <div class="modal-btns">
+                    <button @click="showUpload = false">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入依赖 -->
+    <script src="./js/vue.js"></script>
+    <script src="./js/axios.min.js"></script>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    messages: [],        // 聊天消息列表
+                    inputText: '',       // 输入框内容
+                    loading: false,      // 加载状态
+                    showUpload: false,   // 是否显示上传弹窗
+                    uploadedFiles: []    // 已上传文件列表
+                }
+            },
+            methods: {
+                // 发送普通消息
+                handleSend(event) {
+                    // 阻止回车键默认行为（换行）
+                    if (event) event.preventDefault();
+                    
+                    const text = this.inputText.trim();
+                    if (!text) return;
+
+                    // 添加用户消息
+                    this.messages.push({ isUser: true, text });
+                    this.inputText = '';
+                    this.scrollToBottom();
+                    this.loading = true;
+
+                    // 调用API
+                    axios.get('/ai/generateWithRAG', {
+                        params: { message: text }
+                    }).then(response => {
+                        this.messages.push({ isUser: false, text: response.data.generation });
+                        this.loading = false;
+                        this.scrollToBottom();
+                    }).catch(error => {
+                        this.messages.push({ isUser: false, text: `错误：${error.message}` });
+                        this.loading = false;
+                        this.scrollToBottom();
+                    });
+                },
+
+                // 发送流式消息
+                handleStreamSend() {
+                    const text = this.inputText.trim();
+                    if (!text) return;
+
+                    // 添加用户消息
+                    this.messages.push({ isUser: true, text });
+                    this.inputText = '';
+                    this.scrollToBottom();
+                    this.loading = true;
+
+                    // 添加空的AI消息占位
+                    const aiMsgIndex = this.messages.length;
+                    this.messages.push({ isUser: false, text: '' });
+
+                    // 调用流式API
+                    fetch(`/ai/generateStreamWithRAG?message=${encodeURIComponent(text)}`)
+                        .then(response => {
+                            const reader = response.body.getReader();
+                            const decoder = new TextDecoder();
+                            
+                            const readChunk = () => {
+                                reader.read().then(({ done, value }) => {
+                                    if (done) {
+                                        this.loading = false;
+                                        return;
+                                    }
+                                    // 拼接流式返回的内容
+                                    this.messages[aiMsgIndex].text += decoder.decode(value, { stream: true });
+                                    this.scrollToBottom();
+                                    readChunk();
+                                }).catch(error => {
+                                    this.messages[aiMsgIndex].text += `\n错误：${error.message}`;
+                                    this.loading = false;
+                                });
+                            };
+
+                            readChunk();
+                        }).catch(error => {
+                            this.messages.push({ isUser: false, text: `错误：${error.message}` });
+                            this.loading = false;
+                            this.scrollToBottom();
+                        });
+                },
+
+                // 处理文件上传
+                handleFileUpload() {
+                    const file = this.$refs.fileInput.files[0];
+                    if (!file) return;
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    axios.post('/ai/doc/upload', formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    }).then(response => {
+                        this.uploadedFiles.push(file.name);
+                        this.messages.push({ 
+                            isUser: false, 
+                            text: `文件 "${file.name}" 上传成功，可以基于该文件提问了` 
+                        });
+                        this.showUpload = false;
+                        this.$refs.fileInput.value = ''; // 重置文件输入
+                        this.scrollToBottom();
+                    }).catch(error => {
+                        this.messages.push({ 
+                            isUser: false, 
+                            text: `文件上传失败：${error.message}` 
+                        });
+                        this.scrollToBottom();
+                    });
+                },
+
+                // 滚动到最新消息
+                scrollToBottom() {
+                    this.$nextTick(() => {
+                        const messageList = this.$refs.messageList;
+                        messageList.scrollTop = messageList.scrollHeight;
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
