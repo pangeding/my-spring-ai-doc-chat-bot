@@ -3,6 +3,15 @@ spring:
   ai:
     dashscope:
       api-key: ${DASHSCOPE_API_KEY}
+      chat:
+        model: qwen-turbo  # 通义千问模型名称（核心配置）
 
 server:
   port: 8080
+
+# enabled debug log out.
+logging:
+  level:
+    org.springframework.ai: debug
+    com.alibaba.dashscope.api: debug
+    com.alibaba.cloud.ai.dashscope.chat: debug
