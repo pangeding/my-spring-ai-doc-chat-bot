@@ -1,6 +1,11 @@
 
 spring:
   ai:
+    vectorstore:
+      milvus:
+        host: localhost  # Milvus服务地址
+        port: 19530       # 默认端口
+        collection-name: doc_chunks  # 存储文档片段的集合名
     dashscope:
       api-key: ${DASHSCOPE_API_KEY}
       chat:

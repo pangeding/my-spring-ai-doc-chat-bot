@@ -15,7 +15,8 @@
     <description>spring-ai-chatdoc</description>
     <properties>
         <java.version>17</java.version>
-        <spring-ai.version>1.0.0-M6.1</spring-ai.version>
+        <spring-ai.version>1.0.0-M6</spring-ai.version>
+        <spring-ai-1.version>1.0.0-M6.1</spring-ai-1.version>
     </properties>
     <dependencies>
         <dependency>
@@ -33,7 +34,27 @@
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-starter</artifactId>
-            <version>${spring-ai.version}</version> <!-- 最新里程碑版本，支持通义千问 -->
+            <version>${spring-ai-1.version}</version> <!-- 最新里程碑版本，支持通义千问 -->
+        </dependency>
+        <!-- 核心依赖：包含基础接口（Document、TextSplitter等） -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-core</artifactId>
+            <version>${spring-ai.version}</version> <!-- 最新版本 -->
+        </dependency>
+
+        <!-- 文档读取器：支持 PDF/TXT/MD 等，基于 Tika -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-tika-document-reader</artifactId> <!--  artifactId 已调整 -->
+            <version>${spring-ai.version}</version>
+        </dependency>
+
+        <!-- Milvus 向量存储：用于存储文档向量 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-milvus-store</artifactId> <!-- artifactId 简化 -->
+            <version>${spring-ai.version}</version>
         </dependency>
 
         <dependency>
@@ -46,22 +67,7 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-document-reader-tika</artifactId>
-            <version>${spring-ai.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-vectorstore-milvus</artifactId>
-            <version>${spring-ai.version}</version>
-        </dependency>
-        <!-- 文本分割器 -->
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-core</artifactId>
-            <version>${spring-ai.version}</version>
-        </dependency>
+
     </dependencies>
 
 
@@ -77,6 +83,12 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <requiresUnpack>
+                        <dependency>
+                            <groupId>*</groupId>
+                            <artifactId>*</artifactId>
+                        </dependency>
+                    </requiresUnpack>
                 </configuration>
             </plugin>
         </plugins>
