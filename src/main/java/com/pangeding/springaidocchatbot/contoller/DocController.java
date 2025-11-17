@@ -4,19 +4,21 @@ import com.pangeding.springaidocchatbot.service.DocService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @RestController
+@RequestMapping("/ai")
 public class DocController {
 
     @Autowired
     private DocService docService;
 
     // 上传文档接口
-    @PostMapping("/ai/doc/upload")
+    @PostMapping("/doc/upload")
     public String uploadDoc(@RequestParam("file") MultipartFile file) {
         // 1. 记录上传请求基本信息
         log.info("收到文件上传请求，文件名: [{}]，原始文件名: [{}]，文件大小: [{}KB]，文件类型: [{}]",

@@ -23,6 +23,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-bom</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
         <!--<dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
@@ -56,6 +63,13 @@
             <artifactId>spring-ai-milvus-store</artifactId> <!-- artifactId 简化 -->
             <version>${spring-ai.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-milvus-store-spring-boot-starter</artifactId>
+            <version>${spring-ai.version}</version>
+        </dependency>
+
 
         <dependency>
             <groupId>org.projectlombok</groupId>

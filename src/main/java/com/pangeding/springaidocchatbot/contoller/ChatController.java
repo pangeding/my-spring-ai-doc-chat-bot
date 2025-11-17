@@ -11,10 +11,12 @@ import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.milvus.MilvusVectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -31,26 +33,27 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
+@RequestMapping("/ai")
 public class ChatController {
 
     private final ChatClient chatClient;
 
-    private final VectorStore vectorStore;
+    private final MilvusVectorStore milvusVectorStore;
 
     @Autowired
-    public ChatController(ChatClient.Builder builder, VectorStore vectorStore) {
+    public ChatController(ChatClient.Builder builder, MilvusVectorStore milvusVectorStore) {
         this.chatClient = builder.build();
-        this.vectorStore = vectorStore;
+        this.milvusVectorStore = milvusVectorStore;
     }
 
-    @GetMapping("/ai/generate")
+    @GetMapping("/generate")
     public Map<String, String> generate(@RequestParam(value = "message", defaultValue = "介绍你自己") String message) {
         String response = chatClient.prompt().user(message).call().content();
         log.info("User message: {}, AI response: {}", message, response);
         return Map.of("generation", response);
     }
 
-    @GetMapping(value = "/ai/generateStream", produces = MediaType.TEXT_EVENT_STREAM_VALUE + ";charset=UTF-8")
+    @GetMapping(value = "/generateStream", produces = MediaType.TEXT_EVENT_STREAM_VALUE + ";charset=UTF-8")
     public Flux<String> generateStream(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message, HttpServletResponse response) {
         response.setCharacterEncoding("UTF-8");
         log.info("User message (streaming): {}", message);
@@ -61,7 +64,7 @@ public class ChatController {
 
     }
 
-    @GetMapping("/ai/generateWithRAG")
+    @GetMapping("/generateWithRAG")
     public Map<String, String> generateWithRAG(@RequestParam(value = "message", defaultValue = "介绍你自己") String message) {
         Prompt prompt = generatePrompt(message);
         
@@ -70,7 +73,7 @@ public class ChatController {
         return Map.of("generation", response);
     }
 
-    @GetMapping(value = "/ai/generateStreamWithRAG", produces = MediaType.TEXT_EVENT_STREAM_VALUE + ";charset=UTF-8")
+    @GetMapping(value = "/generateStreamWithRAG", produces = MediaType.TEXT_EVENT_STREAM_VALUE + ";charset=UTF-8")
     public Flux<String> generateStreamWithRAG(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message, HttpServletResponse response) {
         Prompt prompt = generatePrompt(message);
         
@@ -89,7 +92,7 @@ public class ChatController {
                                                     .query(message)
                                                     .topK(3)
                                                     .build();
-        List<Document> relevantDocs = vectorStore.similaritySearch(searchRequest);
+        List<Document> relevantDocs = milvusVectorStore.similaritySearch(searchRequest);
 
         // 2. 构造包含上下文的Prompt
         String promptTemplate = """

@@ -1,15 +1,25 @@
 
 spring:
+  main:
+    allow-bean-definition-overriding: true  # 启用Bean覆盖
   ai:
     vectorstore:
       milvus:
-        host: localhost  # Milvus服务地址
-        port: 19530       # 默认端口
-        collection-name: doc_chunks  # 存储文档片段的集合名
+        client:
+          host: localhost  # Milvus服务地址
+          port: 19530       # 默认端口  # 存储文档片段的集合名
+         # 自动生成 id，无需手动传
+        # 3. Embedding 配置（指定维度，必须与 Milvus 向量字段维度一致）
+        # 先通过 Attu 查看你的 Milvus 集合：vector 字段的维度（如 768、1536，demo 常用 768）
+
+
     dashscope:
       api-key: ${DASHSCOPE_API_KEY}
       chat:
         model: qwen-turbo  # 通义千问模型名称（核心配置）
+      embedding:
+        model: text-embedding-v1  # 关键：指定通义千问的Embedding模型（用于生成向量）
+
 
 server:
   port: 8080
